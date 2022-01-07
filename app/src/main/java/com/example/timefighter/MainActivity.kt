@@ -4,7 +4,12 @@ import android.content.ContentValues.TAG
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.os.PersistableBundle
+import android.support.v7.app.AlertDialog
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
+import android.view.animation.AnimationUtils
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -25,10 +30,12 @@ class MainActivity : AppCompatActivity() {
     internal lateinit var timeLeftTextView: TextView
     private var timeLeftOnTimer: Long = 60000
 
+
     companion object {
-        private val TAG = MainActivity::class.java.simpleName
+        private val TAG  = MainActivity::class.java.simpleName
         private const val SCORE_KEY = "SCORE_KEY"
         private const val TIME_LEFT_KEY = "TIME_LEFT_KEY"
+
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,9 +62,32 @@ class MainActivity : AppCompatActivity() {
             timeLeftOnTimer = savedInstanceState.getLong(TIME_LEFT_KEY)
             restoreGame()
         } else {
-        resetGame()
+            resetGame()
         }
 
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        super.onCreateOptionsMenu(menu)
+        menuInflater.inflate(R.menu.menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.actionAbout) {
+            showInfo()
+        }
+        return true
+    }
+
+    private fun showInfo() {
+        val dialogTitle = getString(R.string.aboutTitle, BuildConfig.VERSION_NAME)
+        val dialogMessage = getString(R.string.aboutMessage)
+
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle(dialogTitle)
+        builder.setMessage(dialogMessage)
+        builder.create().show()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -67,7 +97,7 @@ class MainActivity : AppCompatActivity() {
         outState.putLong(TIME_LEFT_KEY, timeLeftOnTimer)
         countDownTimer.cancel()
 
-        Log.d(TAG, "onSaveInstanceState: Saving Score: $score & Time Left: $timeLeftOnTimer")
+        Log.d(TAG, "onSaveInstanceState: SavingScore: $score & Time Left: $timeLeftOnTimer")
     }
 
     override fun onDestroy() {
@@ -85,17 +115,21 @@ class MainActivity : AppCompatActivity() {
         countDownTimer = object : CountDownTimer(initialCountDown, countDownInterval) {
             override fun onTick(millisUntilFinished: Long) {
                 timeLeftOnTimer = millisUntilFinished
-               val timeLeft = millisUntilFinished / 1000
+                val timeLeft = millisUntilFinished / 1000
                 timeLeftTextView.text = getString(R.string.timeLeft, timeLeft)
             }
 
             override fun onFinish() {
-               endGame()
+                endGame()
             }
 
         }
         gameStarted = false
     }
+
+
+
+
 
     private fun incrementScore() {
         if(!gameStarted) {
@@ -104,6 +138,9 @@ class MainActivity : AppCompatActivity() {
         score += 1
         val newScore = getString(R.string.yourScore, score)
         gameScoreTextView.text = newScore
+
+        val blinkAnimation = AnimationUtils.loadAnimation(this, R.anim.blink)
+        gameScoreTextView.startAnimation(blinkAnimation)
 
 
     }
@@ -123,13 +160,13 @@ class MainActivity : AppCompatActivity() {
         val restoredTime = timeLeftOnTimer / 1000
         timeLeftTextView.text = getString(R.string.timeLeft, restoredTime)
 
-        countDownTimer = object : CountDownTimer(timeLeftOnTimer, countDownInterval) {
+        countDownTimer = object: CountDownTimer(timeLeftOnTimer, countDownInterval) {
             override fun onTick(millisUntilFinished: Long) {
                 timeLeftOnTimer = millisUntilFinished
                 val timeLeft = millisUntilFinished / 1000
                 timeLeftTextView.text = getString(R.string.timeLeft, timeLeft)
-            }
 
+            }
             override fun onFinish() {
                 endGame()
             }
